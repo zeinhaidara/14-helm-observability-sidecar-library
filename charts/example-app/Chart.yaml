@@ -1,0 +1,10 @@
+apiVersion: v2
+name: example-app
+description: Example app chart consuming the observability-sidecars library chart
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+dependencies:
+  - name: observability-sidecars
+    version: "0.1.0"
+    repository: "file://../observability-sidecars"

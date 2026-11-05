@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "example-app.fullname" . }}
+  labels:
+    {{- include "example-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "example-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "example-app.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- include "observability-sidecars.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: {{ include "example-app.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          securityContext:
+            {{- include "observability-sidecars.containerSecurityContext" . | nindent 12 }}
+          {{- if .Values.observabilitySidecars.fluentbit.enabled }}
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log/app
+          {{- end }}
+        {{- include "observability-sidecars.sidecars" . | nindent 8 }}
+      {{- if .Values.observabilitySidecars.fluentbit.enabled }}
+      volumes:
+        {{- include "observability-sidecars.volumes" . | nindent 8 }}
+      {{- end }}

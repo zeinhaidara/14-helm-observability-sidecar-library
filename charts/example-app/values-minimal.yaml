@@ -1,0 +1,7 @@
+# Example of opting out of both sidecars - just the app container and
+# its hardened security context, nothing else.
+observabilitySidecars:
+  prometheus:
+    enabled: false
+  fluentbit:
+    enabled: false
