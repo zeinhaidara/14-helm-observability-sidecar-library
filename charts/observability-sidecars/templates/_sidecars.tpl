@@ -23,12 +23,13 @@ capabilities:
 {{- end -}}
 
 {{/*
-Prometheus metrics-exporter sidecar. Exposes a /metrics port for a
-Prometheus server to scrape; does not run Prometheus itself.
+StatsD-to-Prometheus exporter sidecar. Listens for StatsD-protocol metrics
+from the app and re-exposes them as Prometheus-format metrics on /metrics;
+the app has to emit StatsD metrics for there to be anything to export.
 */}}
 {{- define "observability-sidecars.prometheusSidecar" -}}
 {{- $cfg := .Values.observabilitySidecars.prometheus }}
-- name: prometheus-exporter
+- name: statsd-exporter
   image: "{{ $cfg.image.repository }}:{{ $cfg.image.tag }}"
   ports:
     - name: metrics
