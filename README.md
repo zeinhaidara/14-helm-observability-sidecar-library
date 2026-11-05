@@ -8,13 +8,17 @@ containers, volumes and security context once, so any consumer chart can
 pull them in with a handful of `include` calls instead of copy-pasting
 YAML.
 
-Scope: this chart injects a Prometheus **metrics-exporter** sidecar (it
-exposes a `/metrics` port for a Prometheus server to scrape - it does not
-run Prometheus itself) and a Fluent Bit sidecar that tails a shared log
-volume and ships to stdout. There is no real log backend, no Prometheus
-Operator CRDs (no ServiceMonitor/PodMonitor), and nothing here is deployed
-to a cluster - it is validated with `helm lint`, `helm template` and
-`kubeconform` only.
+Scope: this chart injects a **StatsD-to-Prometheus exporter** sidecar
+(`prom/statsd-exporter`, port 9102) and a Fluent Bit sidecar that tails a
+shared log volume and ships to stdout. The exporter sidecar listens for
+StatsD-protocol metrics and re-exposes them in Prometheus format on
+`/metrics` for a Prometheus server to scrape - it does not run Prometheus
+itself, and it does not scrape or instrument the app on its own; the app
+has to emit StatsD metrics for there to be anything on that endpoint. This
+chart wires the sidecar up but does not send it any metrics itself. There
+is no real log backend, no Prometheus Operator CRDs (no
+ServiceMonitor/PodMonitor), and nothing here is deployed to a cluster - it
+is validated with `helm lint`, `helm template` and `kubeconform` only.
 
 ## Architecture
 
@@ -35,7 +39,7 @@ flowchart LR
 
 ## Prerequisites
 
-- Helm 3.14+
+- Tested with Helm v3.16.2
 - [kubeconform](https://github.com/yannh/kubeconform) (CI only; optional
   locally)
 - No Kubernetes cluster required
@@ -66,6 +70,9 @@ spec:
         - name: app
           securityContext:
             {{- include "observability-sidecars.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log/app
         {{- include "observability-sidecars.sidecars" . | nindent 8 }}
       volumes:
         {{- include "observability-sidecars.volumes" . | nindent 8 }}
@@ -104,7 +111,8 @@ observabilitySidecars:
 - The Fluent Bit sidecar only mounts the shared log volume read-only; it
   never gets write access to the app's filesystem.
 - No credentials or endpoints are baked in anywhere - Fluent Bit ships to
-  stdout, and the Prometheus sidecar only exposes a scrape port.
+  stdout, and the statsd-exporter sidecar only exposes a scrape port; it
+  receives no real traffic in this chart.
 
 ## Idempotency
 
@@ -124,3 +132,6 @@ upgrade (safe to re-run).
   contexts.
 - Only validated with `helm lint`/`helm template`, `kubeconform` and a
   rendered-output test script. Never deployed to a real cluster.
+- Nothing in this chart or its tests sends StatsD metrics to the exporter
+  sidecar - the container is wired up correctly, but there is no exercised
+  end-to-end metrics pipeline.
