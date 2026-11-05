@@ -1,0 +1,6 @@
+apiVersion: v2
+name: observability-sidecars
+description: Library chart providing Prometheus and Fluent Bit sidecars plus hardened security contexts
+type: library
+version: 0.1.0
+appVersion: "1.0.0"
