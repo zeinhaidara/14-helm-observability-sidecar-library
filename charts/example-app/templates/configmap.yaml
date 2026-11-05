@@ -1,0 +1,11 @@
+{{- if .Values.observabilitySidecars.fluentbit.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.observabilitySidecars.fluentbit.configMapName }}
+  labels:
+    {{- include "example-app.labels" . | nindent 4 }}
+data:
+  fluent-bit.conf: |
+{{ include "observability-sidecars.fluentbitConfig" . | indent 4 }}
+{{- end }}

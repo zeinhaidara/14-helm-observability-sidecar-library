@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      HELM_VERSION: v3.16.2
+      KUBECONFORM_VERSION: v0.8.0
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: install helm
+        run: |
+          curl -sSLO "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          echo "9318379b847e333460d33d291d4c088156299a26cd93d570a7f5d0c36e50b5bb  helm-${HELM_VERSION}-linux-amd64.tar.gz" | sha256sum -c -
+          tar -xzf "helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          sudo mv linux-amd64/helm /usr/local/bin/helm
+
+      - name: install kubeconform
+        run: |
+          curl -sSLO "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883  kubeconform-linux-amd64.tar.gz" | sha256sum -c -
+          tar -xzf kubeconform-linux-amd64.tar.gz
+          sudo mv kubeconform /usr/local/bin/kubeconform
+
+      - name: helm dependency update
+        run: helm dependency update charts/example-app
+
+      - name: helm lint (library chart)
+        run: helm lint charts/observability-sidecars
+
+      - name: helm lint (example app)
+        run: helm lint charts/example-app
+
+      - name: helm template (default values)
+        run: helm template charts/example-app > /tmp/default.yaml
+
+      - name: helm template (minimal values)
+        run: helm template charts/example-app -f charts/example-app/values-minimal.yaml > /tmp/minimal.yaml
+
+      - name: kubeconform (default values)
+        run: kubeconform -summary -strict -kubernetes-version 1.31.0 -exit-on-error /tmp/default.yaml
+
+      - name: kubeconform (minimal values)
+        run: kubeconform -summary -strict -kubernetes-version 1.31.0 -exit-on-error /tmp/minimal.yaml
+
+      - name: rendered-output tests
+        run: bash test/run.sh
