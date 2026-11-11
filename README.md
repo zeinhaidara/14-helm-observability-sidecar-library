@@ -1,4 +1,4 @@
-# 14-helm-observability-sidecar-library
+# Observability sidecar Helm library chart
 
 Every team that bolts on metrics and log shipping by hand ends up with a
 slightly different sidecar in every chart: different images, different
@@ -123,7 +123,7 @@ own, so it cannot create or mutate cluster state; only the consumer
 chart's `helm upgrade --install` does, and that is a standard Helm
 upgrade (safe to re-run).
 
-## Known limits
+## Known limitations
 
 - No ServiceMonitor/PodMonitor templates - those need the Prometheus
   Operator installed, which is out of scope for a chart that should
