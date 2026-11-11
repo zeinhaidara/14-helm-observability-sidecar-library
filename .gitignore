@@ -1,6 +1,10 @@
-﻿.dev-context/
+.dev-context/
 .DS_Store
 *.swp
 charts/*.tgz
 charts/**/charts/*.tgz
 *.lock
+*.tfplan
+__pycache__/
+*.pyc
+memory/
