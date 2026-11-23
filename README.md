@@ -92,6 +92,18 @@ helm template charts/example-app
 helm template charts/example-app -f charts/example-app/values-minimal.yaml
 ```
 
+Run the same checks as CI (Helm v3.16.2 and kubeconform v0.8.0, no cluster):
+
+```sh
+helm dependency update charts/example-app
+helm lint charts/observability-sidecars
+helm lint charts/example-app
+helm template charts/example-app > /tmp/default.yaml
+helm template charts/example-app -f charts/example-app/values-minimal.yaml > /tmp/minimal.yaml
+kubeconform -summary -strict -kubernetes-version 1.31.0 -exit-on-error /tmp/default.yaml /tmp/minimal.yaml
+bash test/run.sh   # asserts on the rendered output with and without sidecars
+```
+
 Toggle each sidecar independently:
 
 ```yaml
